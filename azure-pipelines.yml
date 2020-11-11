@@ -1,0 +1,72 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - server.json
+      - server.parameters.json
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - group: ServerAutomationDemo-jfm
+  - name: azure_resource_group_name
+    value: "ServerProvisionTesting-$(Build.BuildId)"
+  - name: subscription_id
+    value: "80b824de-ec53-4116-9868-3deeab10b0cd"
+  - name: application_id
+    value: "f90f21dc-a601-4ec1-ad06-5aff2e5e3b43"
+  - name: tenant_id
+    value: "a2b2d6bc-afe1-4696-9c37-f97a7ac416d"
+
+steps:
+  - task: PowerShell@2
+    inputs:
+      filePath: "connect-azure.ps1"
+      arguments: '-ServicePrincipalPassword "$(ServerAutomationDemo-AppPw)" -SubscriptionId $(subscription_id) -ApplicationId $(application_id) -TenantId $(tenant_id)'
+  - task: PowerShell@2
+    inputs:
+      targetType: "inline"
+      script: New-AzResourceGroup -Name $(azure_resource_group_name) -Location eastus -Force
+  - task: Pester@0
+    inputs:
+      scriptFolder: "@{Path='$(System.DefaultWorkingDirectory)/server.template.tests.ps1'; Parameters=@{ResourceGroupName='$(azure_resource_group_name)'}}"
+      resultsFile: "$(System.DefaultWorkingDirectory)/server.template.tests.XML"
+      usePSCore: true
+      run32Bit: False
+  - task: AzureResourceManagerTemplateDeployment@3
+    inputs:
+      deploymentScope: "Resource Group"
+      azureResourceManagerConnection: "ARM"
+      subscriptionId: "$(subscription_id)"
+      action: "Create Or Update Resource Group"
+      resourceGroupName: $(azure_resource_group_name)
+      location: "East US"
+      templateLocation: "Linked artifact"
+      csmFile: "server.json"
+      csmParametersFile: "server.parameters.json"
+      deploymentMode: "Incremental"
+      deploymentOutputs: "arm_output"
+  - task: Pester@0
+    inputs:
+      scriptFolder: "@{Path='$(System.DefaultWorkingDirectory)/server.infrastructure.tests.ps1'; Parameters=@{ArmDeploymentJsonOutput='$(arm_output)'}}"
+      resultsFile: "$(System.DefaultWorkingDirectory)/server.infrastructure.tests.XML"
+      usePSCore: true
+      run32Bit: False
+  - task: PowerShell@2
+    inputs:
+      targetType: "inline"
+      script: Get-AzResourceGroup -Name $(azure_resource_group_name) | Remove-AzResourceGroup -Force
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "NUnit"
+      testResultsFiles: "$(System.DefaultWorkingDirectory)/server.infrastructure.tests.XML"
+      failTaskOnFailedTests: true
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "NUnit"
+      testResultsFiles: "$(System.DefaultWorkingDirectory)/server.template.tests.XML"
+      failTaskOnFailedTests: true
