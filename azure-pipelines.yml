@@ -19,7 +19,7 @@ variables:
   - name: application_id
     value: "f90f21dc-a601-4ec1-ad06-5aff2e5e3b43"
   - name: tenant_id
-    value: "a2b2d6bc-afe1-4696-9c37-f97a7ac416d"
+    value: "Engineering Dev/Test"
 
 steps:
   - task: PowerShell@2
