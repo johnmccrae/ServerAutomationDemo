@@ -28,4 +28,4 @@ $connectAzParams = @{
     Tenant           = $TenantId
     Credential       = $credential
 }
-Connect-AzAccount @connectAzParams -ServicePrincipal
+Connect-AzAccount @connectAzParams
