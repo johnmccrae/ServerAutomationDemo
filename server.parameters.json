@@ -8,7 +8,7 @@
         "adminPassword": {
             "reference": {
                 "keyVault": {
-                    "id": "/subscriptions/80b824de-ec53-4116-9868-3deeab10b0cd/resourceGroups/ServerAutomationDemo-jfm/providers/Microsoft.KeyVault/vaults/AutomationDemo-KV-jfm"
+                    "id": "/subscriptions/80b824de-ec53-4116-9868-3deeab10b0cd/resourceGroups/ServerAutomationDemo-jfm/providers/Microsoft.KeyVault/vaults/AutomationDemo-KV-jfm2"
                 },
                 "secretName": "StandardVmAdminPassword"
             }
